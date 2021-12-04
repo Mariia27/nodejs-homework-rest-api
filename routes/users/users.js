@@ -5,7 +5,7 @@ const {
     registration, login, logout
 } = require('../../controllers/users');
 const guard = require('../../helpers/guard')
-const userController = require('../../../controllers/users')
+const userController = require('../../controllers/users')
 const upload = require('../../helpers/uploads')
 const { createUsers, loginUsers, uploadValidateAvatar } = require('./validation')
 
