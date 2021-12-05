@@ -1,10 +1,11 @@
 const jwt = ('jsonwebtoken')
-
 const Users = require('../repository/users')
 const Jimp = require("jimp");
 const fs = require('fs').promises
 const path = require("path");
+const { nanoid } = require("nanoid");
 const { HttpCode } = require('../config/constants')
+const EmailService = require('../services/email')
 require('dotenv').config()
 const SECRET_KEY = process.env.JWT_SECRET_KEY
 const createFolderIsExist = require("../helpers/create-dir");
@@ -20,7 +21,7 @@ cloudinary.config({
 
 const registration = async (req, res, next) => {
     try {
-        const { email } = req.body
+        const { email, name } = req.body
         const user = await Users.findByEmail(email)
         if (user) {
             return res.status(HttpCode.CONFLICT).json({
@@ -30,7 +31,15 @@ const registration = async (req, res, next) => {
                 message: 'Email is already use',
             })
         }
-        const newUser = await Users.create(req.body)
+        const verifyToken = nanoid();
+        const emailService = new EmailService(process.env.NODE_ENV);
+        await emailService.sendEmail(verifyToken, email, name);
+        const newUser = await Users.create({
+            ...req.body,
+            verify: false,
+            verifyToken,
+        })
+
         return res.status(HttpCode.CREATED).json({
             status: 'success',
             code: HttpCode.CREATED,
@@ -50,7 +59,7 @@ const login = async (req, res, next) => {
     try {
         const { email, password } = req.body
         const user = await Users.findByEmail(email)
-        if (!user || !user.validPassword(password)) {
+        if (!user || !user.validPassword(password) || !user.verify) {
             return res.status(HttpCode.UNAUTHORIZED).json({
                 status: 'error',
                 code: HttpCode.UNAUTHORIZED,
@@ -124,9 +133,33 @@ const saveAvatarToStatic = async (req) => {
     return avatarUrl;
 };
 
+const verify = async (req, res, next) => {
+    try {
+        const user = await Users.findByVerifyToken(req.params.token);
+        if (user) {
+            await Users.updateVerifyToken(user.id, true, null);
+            return res.json({
+                status: "seccess",
+                code: HttpCode.OK,
+                message: "Verification successful!",
+            });
+        }
+        return res.status(HttpCode.BAD_REQUEST).json({
+            status: "error",
+            code: HttpCode.BAD_REQUEST,
+            data: "Bad request",
+            message: "Link is not valid",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     registration,
     login,
     logout,
     avatars,
+    verify,
+
 }
