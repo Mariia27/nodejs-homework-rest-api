@@ -9,7 +9,6 @@ require('dotenv').config()
 const SECRET_KEY = process.env.JWT_SECRET_KEY
 const createFolderIsExist = require("../helpers/create-dir");
 const cloudinary = require('cloudinary').v2
-// const { promisify } = require('util')
 
 
 
@@ -19,7 +18,7 @@ cloudinary.config({
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
-// const uploadCloud = promisify(cloudinary.uploader.upload)
+
 
 const registration = async (req, res, next) => {
     try {
@@ -89,10 +88,6 @@ const avatars = async (req, res, next) => {
         const id = req.user.id;
 
         const avatarUrl = await saveAvatarToStatic(req);
-        // const {
-        //     public_id: imgIdCloud,
-        //     secure_url: avatarUrl,
-        // } = await saveAvatarToCloud(req)
         await Users.updateAvatar(id, avatarUrl);
         return res.json({
             status: "seccess",
@@ -130,25 +125,6 @@ const saveAvatarToStatic = async (req) => {
     }
     return avatarUrl;
 };
-
-// const saveAvatarToCloud = async (req) => {
-//     const filePath = req.file.path
-//     const result = await uploadCloud(filePath, {
-//         folder: 'Photo',
-//         transformation: { width: 250, height: 250, crop: 'fill' },
-//     })
-//     cloudinary.uploader.destroy(req.user.imgIdCloud, (err, result) => {
-//         console.log(err, result)
-//     })
-//     try {
-//         await fs.unlink(filePath)
-//     } catch (e) {
-//         console.log(e.message)
-//     }
-//     return result
-// }
-
-
 
 module.exports = {
     registration,
