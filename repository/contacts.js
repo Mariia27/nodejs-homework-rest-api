@@ -1,14 +1,8 @@
-// const fs = require('fs/promises')
-// const contacts = require('./contacts.json')
-
 const { query } = require('express')
 const Contact = require('../model/Schema/contact')
 
 
 const getListContacts = async (userId) => {
-  // const results = await Contact.find({ owner: userId }).populate({
-  //   path: "owner", select: "name email",
-  // })
   const { sortBy, sortByDesc, filter, limit = 5, offset = 0 } = query;
   const searchOptions = { owner: userId };
   const results = await Contact.paginate(searchOptions, {
